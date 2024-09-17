@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trivia Master</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game-container"></div>
+
+    <script>
+        class BootScene extends Phaser.Scene {
+            constructor() {
+                super('BootScene');
+            }
+
+            preload() {
+                this.load.image('background', 'assets/background.png');
+            }
+
+            create() {
+                this.scene.start('StartScene');
+            }
+        }
+
+        class StartScene extends Phaser.Scene {
+            constructor() {
+                super('StartScene');
+            }
+
+            create() {
+                this.createBackground();
+                this.createContentBox();
+            }
+
+            createBackground() {
+                const background = this.add.image(this.scale.width / 2, this.scale.height / 2, 'background');
+                background.setDisplaySize(this.scale.width, this.scale.height);
+            }
+
+            createContentBox() {
+                const box = this.createBox();
+                const fontSize = Math.min(this.scale.width, this.scale.height) * 0.05;
+                const padding = fontSize * 0.5;
+
+                const titleText = this.add.text(box.x, box.y - box.height / 4, 'Trivia Master', {
+                    fontSize: `${fontSize}px`,
+                    fill: '#000',
+                    fontStyle: 'bold'
+                }).setOrigin(0.5);
+
+                const startButton = this.add.text(box.x, box.y + box.height / 4, 'Start Game', {
+                    fontSize: `${fontSize * 0.6}px`,
+                    fill: '#000',
+                    backgroundColor: '#f0f0f0',
+                    padding: { x: padding, y: padding / 2 }
+                }).setOrigin(0.5).setInteractive();
+
+                startButton.on('pointerover', () => startButton.setStyle({ fill: '#ff0000' }));
+                startButton.on('pointerout', () => startButton.setStyle({ fill: '#000' }));
+                startButton.on('pointerdown', () => this.scene.start('CategoryScene'));
+            }
+
+            createBox() {
+                const boxWidth = this.scale.width * 0.8;
+                const boxHeight = this.scale.height * 0.7;
+                const box = this.add.rectangle(
+                    this.scale.width / 2,
+                    this.scale.height / 2,
+                    boxWidth,
+                    boxHeight,
+                    0xffffff,
+                    0.8
+                );
+                box.setStrokeStyle(4, 0x000000);
+                box.setOrigin(0.5);
+
+                // Add rounded corners to the box
+                box.setInteractive();
+                box.input.hitArea.setTo(0, 0, boxWidth, boxHeight);
+                box.input.hitAreaCallback = function (hitArea, x, y, gameObject) {
+                    const radius = 20;
+                    if (x < radius && y < radius) return false;
+                    if (x > boxWidth - radius && y < radius) return false;
+                    if (x < radius && y > boxHeight - radius) return false;
+                    if (x > boxWidth - radius && y > boxHeight - radius) return false;
+                    return true;
+                };
+
+                return box;
+            }
+        }
+
+        class CategoryScene extends Phaser.Scene {
+            constructor() {
+                super('CategoryScene');
+            }
+
+            create() {
+                this.createBackground();
+                this.createContentBox();
+            }
+
+            createBackground() {
+                const background = this.add.image(this.scale.width / 2, this.scale.height / 2, 'background');
+                background.setDisplaySize(this.scale.width, this.scale.height);
+            }
+
+            createContentBox() {
+                const box = this.createBox();
+                const fontSize = Math.min(this.scale.width, this.scale.height) * 0.04;
+                const padding = fontSize * 0.5;
+
+                this.add.text(box.x, box.y - box.height / 2 + padding * 2, 'Select Genre', {
+                    fontSize: `${fontSize}px`,
+                    fill: '#000',
+                    fontStyle: 'bold'
+                }).setOrigin(0.5);
+
+                const categories = [
+                    'General Knowledge', 'History', 'Science', 'Sports',
+                    'Pop Culture', 'Geography', 'Entertainment', 'Random'
+                ];
+
+                const buttonWidth = box.width * 0.4;
+                const buttonHeight = fontSize * 1.5;
+                const columns = 2;
+
+                categories.forEach((category, index) => {
+                    const row = Math.floor(index / columns);
+                    const col = index % columns;
+                    const x = box.x + (col - 0.5) * (buttonWidth + padding);
+                    const y = box.y - box.height / 4 + row * (buttonHeight + padding);
+
+                    const button = this.add.text(x, y, category, {
+                        fontSize: `${fontSize * 0.8}px`,
+                        fill: '#000',
+                        backgroundColor: '#f0f0f0',
+                        padding: { x: padding, y: padding / 2 }
+                    }).setOrigin(0.5).setInteractive();
+
+                    button.on('pointerover', () => button.setStyle({ fill: '#ff0000' }));
+                    button.on('pointerout', () => button.setStyle({ fill: '#000' }));
+                    button.on('pointerdown', () => this.scene.start('TriviaMaster', { category: category }));
+                });
+            }
+
+            createBox() {
+                const boxWidth = this.scale.width * 0.8;
+                const boxHeight = this.scale.height * 0.7;
+                const box = this.add.rectangle(
+                    this.scale.width / 2,
+                    this.scale.height / 2,
+                    boxWidth,
+                    boxHeight,
+                    0xffffff,
+                    0.8
+                );
+                box.setStrokeStyle(4, 0x000000);
+                box.setOrigin(0.5);
+
+                // Add rounded corners to the box
+                box.setInteractive();
+                box.input.hitArea.setTo(0, 0, boxWidth, boxHeight);
+                box.input.hitAreaCallback = function (hitArea, x, y, gameObject) {
+                    const radius = 20;
+                    if (x < radius && y < radius) return false;
+                    if (x > boxWidth - radius && y < radius) return false;
+                    if (x < radius && y > boxHeight - radius) return false;
+                    if (x > boxWidth - radius && y > boxHeight - radius) return false;
+                    return true;
+                };
+
+                return box;
+            }
+        }
+
+        class TriviaMaster extends Phaser.Scene {
+            constructor() {
+                super('TriviaMaster');
+                this.score = 0;
+                this.highScore = parseInt(localStorage.getItem('triviaHighScore') || '0');
+                this.currentQuestion = null;
+                this.timer = null;
+                this.timerEvent = null;
+                this.category = null;
+                this.questions = [];
+            }
+
+            init(data) {
+                this.category = data.category;
+                this.loadQuestions();
+            }
+
+            create() {
+                this.createBackground();
+                this.createContentBox();
+                this.startGame();
+            }
+
+            createBackground() {
+                const background = this.add.image(this.scale.width / 2, this.scale.height / 2, 'background');
+                background.setDisplaySize(this.scale.width, this.scale.height);
+            }
+
+            createContentBox() {
+                const box = this.createBox();
+                box.setName('contentBox');
+                this.createUI(box);
+            }
+
+            createBox() {
+                const boxWidth = this.scale.width * 0.8;
+                const boxHeight = this.scale.height * 0.7;
+                const box = this.add.rectangle(
+                    this.scale.width / 2,
+                    this.scale.height / 2,
+                    boxWidth,
+                    boxHeight,
+                    0xffffff,
+                    0.8
+                );
+                box.setStrokeStyle(4, 0x000000);
+                box.setOrigin(0.5);
+
+                // Add rounded corners to the box
+                box.setInteractive();
+                box.input.hitArea.setTo(0, 0, boxWidth, boxHeight);
+                box.input.hitAreaCallback = function (hitArea, x, y, gameObject) {
+                    const radius = 20;
+                    if (x < radius && y < radius) return false;
+                    if (x > boxWidth - radius && y < radius) return false;
+                    if (x < radius && y > boxHeight - radius) return false;
+                    if (x > boxWidth - radius && y > boxHeight - radius) return false;
+                    return true;
+                };
+
+                return box;
+            }
+
+            createUI(box) {
+                const fontSize = Math.min(this.scale.width, this.scale.height) * 0.04;
+                const padding = fontSize * 0.5;
+
+                // Center-align the timer text at the top of the box
+                this.timerText = this.add.text(box.x, box.y - box.height / 2 + padding * 2, '', {
+                    fontSize: `${fontSize}px`,
+                    fill: '#000'
+                }).setOrigin(0.5);
+
+                // Center-align the question text
+                this.questionText = this.add.text(box.x, box.y - box.height / 4, '', {
+                    fontSize: `${fontSize * 1.2}px`,
+                    fill: '#000',
+                    align: 'center',
+                    wordWrap: { width: box.width * 0.9 }
+                }).setOrigin(0.5);
+
+                // Create answer buttons in a 2x2 grid
+                this.answerButtons = [];
+                const buttonWidth = box.width * 0.35;
+                const buttonHeight = fontSize * 2.5;
+                const gridWidth = buttonWidth * 2 + padding * 2;
+                const gridHeight = buttonHeight * 2 + padding;
+                const startY = box.y + padding;
+                const startX = box.x - gridWidth / 2 + buttonWidth / 2;
+
+                for (let i = 0; i < 4; i++) {
+                    const row = Math.floor(i / 2);
+                    const col = i % 2;
+                    const x = startX + col * (buttonWidth + padding);
+                    const y = startY + row * (buttonHeight + padding);
+
+                    const button = this.add.text(x, y, '', {
+                        fontSize: `${fontSize}px`,
+                        fill: '#000',
+                        backgroundColor: '#f0f0f0',
+                        padding: { x: padding, y: padding / 2 },
+                        wordWrap: { width: buttonWidth - padding * 2 },
+                        align: 'center'
+                    }).setOrigin(0.5).setInteractive();
+
+                    button.setFixedSize(buttonWidth, buttonHeight);
+
+                    button.on('pointerover', () => button.setStyle({ fill: '#ff0000' }));
+                    button.on('pointerout', () => button.setStyle({ fill: '#000' }));
+                    button.on('pointerdown', () => this.checkAnswer(i));
+
+                    this.answerButtons.push(button);
+                }
+
+                // Align score and high score to the top left, outside the box
+                this.scoreText = this.add.text(padding, padding, 'Score: 0', { fontSize: `${fontSize * 0.8}px`, fill: '#000' });
+                this.highScoreText = this.add.text(padding, padding * 3, 'High Score: 0', { fontSize: `${fontSize * 0.8}px`, fill: '#000' });
+
+                // Add feedback text
+                this.feedbackText = this.add.text(box.x, box.y + box.height / 2 - padding * 2, '', {
+                    fontSize: `${fontSize}px`,
+                    fill: '#000',
+                    align: 'center'
+                }).setOrigin(0.5);
+            }
+
+            loadQuestions() {
+                const generalQuestions = [
+                    {
+                        question: "What is the capital of Japan?",
+                        answers: ["Beijing", "Seoul", "Tokyo", "Bangkok"],
+                        correctAnswer: 2,
+                        category: "General Knowledge",
+                        timeLimit: 15
+                    },
+                    {
+                        question: "Who wrote 'To Kill a Mockingbird'?",
+                        answers: ["Ernest Hemingway", "Harper Lee", "John Steinbeck", "F. Scott Fitzgerald"],
+                        correctAnswer: 1,
+                        category: "General Knowledge",
+                        timeLimit: 15
+                    }
+                ];
+
+                const historyQuestions = [
+                    {
+                        question: "In which year did World War II end?",
+                        answers: ["1943", "1944", "1945", "1946"],
+                        correctAnswer: 2,
+                        category: "History",
+                        timeLimit: 15
+                    },
+                    {
+                        question: "Who was the first President of the United States?",
+                        answers: ["Thomas Jefferson", "John Adams", "George Washington", "Benjamin Franklin"],
+                        correctAnswer: 2,
+                        category: "History",
+                        timeLimit: 15
+                    }
+                ];
+
+                const scienceQuestions = [
+                    {
+                        question: "What is the chemical symbol for gold?",
+                        answers: ["Go", "Gd", "Au", "Ag"],
+                        correctAnswer: 2,
+                        category: "Science",
+                        timeLimit: 15
+                    },
+                    {
+                        question: "What is the largest organ in the human body?",
+                        answers: ["Brain", "Liver", "Skin", "Heart"],
+                        correctAnswer: 2,
+                        category: "Science",
+                        timeLimit: 15
+                    }
+                ];
+
+                if (this.category === "Random") {
+                    this.questions = [...generalQuestions, ...historyQuestions, ...scienceQuestions];
+                } else if (this.category === "General Knowledge") {
+                    this.questions = generalQuestions;
+                } else if (this.category === "History") {
+                    this.questions = historyQuestions;
+                } else if (this.category === "Science") {
+                    this.questions = scienceQuestions;
+                }
+
+                this.questions = Phaser.Utils.Array.Shuffle(this.questions);
+            }
+
+            startGame() {
+                this.score = 0;
+                this.updateScore();
+                this.nextQuestion();
+            }
+
+            nextQuestion() {
+                if (this.questions.length === 0) {
+                    this.endGame();
+                    return;
+                }
+                this.currentQuestion = this.questions.pop();
+                this.displayQuestion();
+                this.startTimer();
+            }
+
+            displayQuestion() {
+                this.questionText.setText(this.currentQuestion.question);
+                this.currentQuestion.answers.forEach((answer, index) => {
+                    this.answerButtons[index].setText(answer);
+                });
+
+                // Adjust font size based on text length
+                const maxQuestionLength = 150;
+                const questionLength = this.currentQuestion.question.length;
+                const scaleFactor = Math.max(0.6, 1 - (questionLength / maxQuestionLength));
+                const fontSize = Math.min(this.scale.width, this.scale.height) * 0.048 * scaleFactor;
+                this.questionText.setFontSize(fontSize);
+
+                // Adjust answer button font size
+                this.answerButtons.forEach(button => {
+                    const answerLength = button.text.length;
+                    const answerScaleFactor = Math.max(0.7, 1 - (answerLength / 50));
+                    const answerFontSize = Math.min(this.scale.width, this.scale.height) * 0.044 * answerScaleFactor;
+                    button.setFontSize(answerFontSize);
+                });
+
+                // Adjust vertical positions to center everything
+                const box = this.children.getByName('contentBox');
+                const totalHeight = this.questionText.height + (this.answerButtons[0].height * 2) + (fontSize * 3);
+                const startY = box.y - totalHeight / 2;
+
+                this.questionText.setY(startY);
+
+                this.answerButtons.forEach((button, index) => {
+                    const row = Math.floor(index / 2);
+                    const col = index % 2;
+                    const x = box.x + (col - 0.5) * (button.width + fontSize);
+                    const y = startY + this.questionText.height + fontSize + row * (button.height + fontSize);
+                    button.setPosition(x, y);
+                });
+            }
+
+            startTimer() {
+                this.timeLeft = this.currentQuestion.timeLimit;
+                this.updateTimerText();
+                this.timerEvent = this.time.addEvent({
+                    delay: 1000,
+                    callback: this.updateTimer,
+                    callbackScope: this,
+                    loop: true
+                });
+            }
+
+            updateTimer() {
+                this.timeLeft--;
+                this.updateTimerText();
+                if (this.timeLeft <= 0) {
+                    this.timerEvent.remove();
+                    this.timeUp();
+                }
+            }
+
+            updateTimerText() {
+                this.timerText.setText(`Time left: ${this.timeLeft}`);
+                this.timerText.setFontSize(Math.min(this.scale.width, this.scale.height) * 0.04);
+            }
+
+            timeUp() {
+                this.checkAnswer(-1);
+            }
+
+            checkAnswer(answerIndex) {
+                this.timerEvent.remove();
+                if (answerIndex === this.currentQuestion.correctAnswer) {
+                    this.score += 10;
+                    this.feedbackText.setText('Correct! +10 points').setColor('#008000');
+                } else {
+                    this.score = Math.max(0, this.score - 5);
+                    this.feedbackText.setText('Incorrect. -5 points').setColor('#ff0000');
+                }
+                this.updateScore();
+
+                // Highlight the correct answer
+                this.answerButtons[this.currentQuestion.correctAnswer].setStyle({ backgroundColor: '#00ff00' });
+
+                // Disable all buttons
+                this.answerButtons.forEach(button => button.disableInteractive());
+
+                this.time.delayedCall(2000, () => {
+                    this.feedbackText.setText('');
+                    this.answerButtons.forEach(button => {
+                        button.setStyle({ backgroundColor: '#f0f0f0' });
+                        button.setInteractive();
+                    });
+                    this.nextQuestion();
+                });
+            }
+
+            updateScore() {
+                this.scoreText.setText(`Score: ${this.score}`);
+                if (this.score > this.highScore) {
+                    this.highScore = this.score;
+                    this.highScoreText.setText(`High Score: ${this.highScore}`);
+                    localStorage.setItem('triviaHighScore', this.highScore);
+                }
+            }
+
+            endGame() {
+                this.scene.start('EndScene', { score: this.score, highScore: this.highScore });
+            }
+        }
+
+        class EndScene extends Phaser.Scene {
+            constructor() {
+                super('EndScene');
+            }
+
+            create(data) {
+                this.createBackground();
+                this.createContentBox(data);
+            }
+
+            createBackground() {
+                const background = this.add.image(this.scale.width / 2, this.scale.height / 2, 'background');
+                background.setDisplaySize(this.scale.width, this.scale.height);
+            }
+
+            createContentBox(data) {
+                const box = this.createBox();
+                const fontSize = Math.min(this.scale.width, this.scale.height) * 0.05;
+                const padding = fontSize * 0.5;
+
+                this.add.text(box.x, box.y - box.height / 3, 'Game Over', {
+                    fontSize: `${fontSize}px`,
+                    fill: '#000'
+                }).setOrigin(0.5);
+
+                this.add.text(box.x, box.y, `Your Score: ${data.score}`, {
+                    fontSize: `${fontSize * 0.8}px`,
+                    fill: '#000'
+                }).setOrigin(0.5);
+
+                this.add.text(box.x, box.y + box.height / 6, `High Score: ${data.highScore}`, {
+                    fontSize: `${fontSize * 0.8}px`,
+                    fill: '#000'
+                }).setOrigin(0.5);
+
+                const replayButton = this.add.text(box.x, box.y + box.height / 3, 'Play Again', {
+                    fontSize: `${fontSize * 0.6}px`,
+                    fill: '#000',
+                    backgroundColor: '#f0f0f0',
+                    padding: { x: padding, y: padding / 2 }
+                }).setOrigin(0.5).setInteractive();
+
+                replayButton.on('pointerover', () => replayButton.setStyle({ fill: '#ff0000' }));
+                replayButton.on('pointerout', () => replayButton.setStyle({ fill: '#000' }));
+                replayButton.on('pointerdown', () => this.scene.start('StartScene'));
+            }
+
+            createBox() {
+                const boxWidth = this.scale.width * 0.8;
+                const boxHeight = this.scale.height * 0.7;
+                const box = this.add.rectangle(
+                    this.scale.width / 2,
+                    this.scale.height / 2,
+                    boxWidth,
+                    boxHeight,
+                    0xffffff,
+                    0.8
+                );
+                box.setStrokeStyle(4, 0x000000);
+                box.setOrigin(0.5);
+
+                // Add rounded corners to the box
+                box.setInteractive();
+                box.input.hitArea.setTo(0, 0, boxWidth, boxHeight);
+                box.input.hitAreaCallback = function (hitArea, x, y, gameObject) {
+                    const radius = 20;
+                    if (x < radius && y < radius) return false;
+                    if (x > boxWidth - radius && y < radius) return false;
+                    if (x < radius && y > boxHeight - radius) return false;
+                    if (x > boxWidth - radius && y > boxHeight - radius) return false;
+                    return true;
+                };
+
+                return box;
+            }
+        }
+
+        const config = {
+            type: Phaser.AUTO,
+            width: window.innerWidth,
+            height: window.innerHeight,
+            parent: 'game-container',
+            scene: [BootScene, StartScene, CategoryScene, TriviaMaster, EndScene]
+        };
+
+        const game = new Phaser.Game(config);
+    </script>
+</body>
+
+</html>
